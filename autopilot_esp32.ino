@@ -73,15 +73,12 @@ void motor_set(int,int);
 
 
 void setup() {
-//Heltec.begin(true /*DisplayEnable Enable*/, false /*LoRa Disable*/, true /*Serial Enable*/);  
   Serial.begin(115200);
     
     delay(1000);
     display_setup();
   button_setup();
-  if(compass_enable)compass_setup();
 
-//  ota_wifi_setup();
   
   
   motor_setup();
@@ -98,16 +95,15 @@ void loop(){
   button_loop();
   
   ///////////////s128*64//////////////////
-  //compass_loop();
   if(screen_enable && millis() > prev_screen_ms + 500){
-    display_loop("");
+    //display_loop("");
     prev_screen_ms = millis();              
 
   }
 
       if(millis() - prev_pid_ms > 100){
         if(ap_on == 1){
-          PID_process();
+          //PID_process();
           if(abs(PID_command)<min_pid_command)PID_command = 0;    
           motor_loop(); 
           bluetooth_loop();         
