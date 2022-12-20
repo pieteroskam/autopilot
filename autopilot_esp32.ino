@@ -14,7 +14,7 @@ boolean screen_enable = false;
 
 
 //display
-void display_loop(String);
+//void display_loop(String);
 String display_message = "";
 
 //Menu setting
@@ -63,7 +63,10 @@ int rate = 100; //Hz Sample Rate This is how often we check the compass, ToDo ch
 
 //define functions here so that bluetooth has acces to it.
 void apToggle();
+
 void motor_set(int,int);
+
+
 
 #include "math_utils.h"
 #include <math.h>
@@ -76,9 +79,11 @@ void setup() {
   Serial.begin(115200);
     
     delay(1000);
-    display_setup();
-  button_setup();
+    //display_setup();
+  //button_setup();
+  //if(compass_enable)compass_setup();
 
+//  ota_wifi_setup();
   
   
   motor_setup();
@@ -92,9 +97,10 @@ void setup() {
 }
 
 void loop(){
-  button_loop();
+//  button_loop();
   
   ///////////////s128*64//////////////////
+  //compass_loop();
   if(screen_enable && millis() > prev_screen_ms + 500){
     //display_loop("");
     prev_screen_ms = millis();              
@@ -136,15 +142,15 @@ void change_heading_command(int diff){
     } else if(mode_selected==4){
       gain_DD += diff;
     }
-    return;//dont change the heading command
+    return;//dont change the heading headingDiffcommand
   }
   
   heading_command += diff;
   if(heading_command>=360) heading_command -=360;
   if(heading_command<0) heading_command +=360;
-  PID_setTarget(heading_command);  
+//  PID_setTarget(heading_command);  
 
-  display_loop("");
+  //display_loop("");
   Serial.println("Heading command changed to"+String(heading_command));
 
 }
