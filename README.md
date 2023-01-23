@@ -13,6 +13,10 @@ Create a folder named autopilot_ble.
 In this folder, Put all the ino files.
 Open autopilot_ble.ino with the arduino IDE
 
+You need the ESP32 analogwrite library. 
+Go to tools->library manager
+Search for ESP32 analogwrite made by Errouaguy and install it
+
 Select your board (My case DOIT ESP32) If the ESP boards cant be selected. please add ESP to the arduino IDE
 Run
 
