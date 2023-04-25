@@ -9,16 +9,12 @@ By downloading this app, the compass, gyro and GPS of the phone will be used. In
 
 #For use in the arduino SDK V2. 
 
-1 Go to tools->library manager. Search for ESP32 analogwrite made by Errouaguy and install it
-
-2 Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
-
-3 Create a folder named autopilot_ble.
-In this folder, Put all the files (with .ino and .h extension) from the repository.
-Open autopilot_ble.ino with the arduino IDE
-
-
-Select your board (My case DOIT ESP32) and port. If the ESP boards cant be selected. please add ESP to the arduino IDE
+1. Go to tools->library manager. Search for ESP32 analogwrite made by Errouaguy and install it
+2. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
+3. Create a folder named autopilot_ble.
+   - In this folder, Put all the files (with .ino and .h extension) from the repository.
+   - Open autopilot_ble.ino with the arduino IDE
+4. Select your board (My case DOIT ESP32) and port. If the ESP boards cant be selected. please add ESP to the arduino IDE
 Run
 
 Now open te app on your phone. It will search for a bluetooth device called autopilot. When its found, connect to it.
