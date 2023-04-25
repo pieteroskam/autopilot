@@ -9,12 +9,11 @@ By downloading this app, the compass, gyro and GPS of the phone will be used. In
 
 #For use in the arduino SDK V2. 
 
-Go to tools->library manager. Search for ESP32 analogwrite made by Errouaguy and install it
+1 Go to tools->library manager. Search for ESP32 analogwrite made by Errouaguy and install it
 
-Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
+2 Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
 
-
-Create a folder named autopilot_ble.
+3 Create a folder named autopilot_ble.
 In this folder, Put all the files (with .ino and .h extension) from the repository.
 Open autopilot_ble.ino with the arduino IDE
 
