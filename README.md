@@ -10,6 +10,9 @@ It can be used as a standalone autopilot based on compasss steering. Another met
 https://play.google.com/apps/testing/com.sailtactical.autopilot
 
 By downloading this app, the compass, gyro and GPS of the phone will be used. In that case, you only need an ESP32 and a motor driver. Wire the motor driver to the ESP, Connect VCC and Ground as per documentation. Connect pin 33 to motor-driver-left and pin 32 to motor-driver-right. It is
+#install the ESP32 driver
+If your computer doesnt recognize the device when you plug it in, you need to install the CP210x driver. It can be downloaded here:
+https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 
 #For use in the arduino SDK V2. 
 
