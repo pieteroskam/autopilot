@@ -40,6 +40,8 @@ that value of 2000 is the result of an analog to digital conversion (ADC). Basic
    - usb socket
    - +5V from IBT-2
    - +5v from L298N
+   - Voltage regulator to bring the 12v/24v down to 5v.
+   - Phone with USB OTG cable.  
   
 
 
