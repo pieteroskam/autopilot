@@ -30,6 +30,19 @@ Now open te app on your phone. It will search for a bluetooth device called auto
 #settings in code
 that value of 2000 is the result of an analog to digital conversion (ADC). Basically, the esp chip transforms a 0-5 volt input to 0 - 4096. so 2000 means roughly 2.5 volts. My motor controller outputs a voltage based on the motor load (in Amps). When the motor draws amps, it is probably on its end and should stop.
 
+#Hardware
+1. ESP32. I prefer an USB-C type with 32 pins (CH340C)
+2. Motor driver. IBT-2 (max 40Amps) or the L298n (max 2 Amps).
+   - Both motor drivers have many clones and they can behave differently. the +5V power supply isnt always available. Faulty devices are common. So make sure to order atleast 2. 
+4. Jumper wires
+5. 5V supply to ESP32.
+   - Use a powerbank,
+   - usb socket
+   - +5V from IBT-2
+   - +5v from L298N
+  
+
+
 # App settings 
 
 The gains are as follows:
