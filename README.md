@@ -1,4 +1,4 @@
-#Facebook group.
+# Facebook group.
 Please, ask question in the facebook group so others can answers and answers will be seen by everyone. Facebook is not my prefered medium but I didn't know a better one. Please join here: https://www.facebook.com/groups/721879886302423
 
 I am open to make units on demand. The price for a unit is 95 euro's excluding shipping costs from the neterlands. The unit you will receive looks like this. https://youtu.be/XkwvWls0uvk
@@ -18,13 +18,16 @@ By downloading this app, the compass, gyro and GPS of the phone will be used. In
 If your computer doesnt recognize the device when you plug it in, you need to install the CP210x driver. It can be downloaded here:
 https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 
+
+
 ## For use in the arduino SDK V2. 
 
-1. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
-2. Create a folder named autopilot_basic.
+1. Download and install Arduini IDE V2 https://www.arduino.cc/en/software
+2. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
+3. Create a folder named autopilot_basic.
    - In this folder, Put all the files (with .ino, .cpp and .h extension) from the repository.
    - Open autopilot_ble.ino with the arduino IDE
-3. Select your board (My case DEVKIT ESP32) and COM port. If the ESP boards cant be selected. please add ESP to the arduino IDE
+4. Select your board (My case DEVKIT ESP32) and COM port. If the ESP boards cant be selected. please add ESP to the arduino IDE
 Run
 
 Now open te app on your phone. It will search for a bluetooth device called autopilot. When its found, connect to it.
