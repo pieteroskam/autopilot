@@ -22,7 +22,7 @@ https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 
 ## For use in the arduino SDK V2. 
 
-1. Download and install Arduini IDE V2 https://www.arduino.cc/en/software
+1. Download and install Arduino IDE V2 https://www.arduino.cc/en/software
 2. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
 3. Create a folder named autopilot_basic.
    - In this folder, Put all the files (with .ino, .cpp and .h extension) from the repository.
