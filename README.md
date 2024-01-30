@@ -22,15 +22,12 @@ https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 
 1. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
 2. Create a folder named autopilot_ble.
-   - In this folder, Put all the files (with .ino and .h extension) from the repository.
+   - In this folder, Put all the files (with .ino, .cpp and .h extension) from the repository.
    - Open autopilot_ble.ino with the arduino IDE
-3. Select your board (My case DOIT ESP32) and COM port. If the ESP boards cant be selected. please add ESP to the arduino IDE
+3. Select your board (My case DEVKIT ESP32) and COM port. If the ESP boards cant be selected. please add ESP to the arduino IDE
 Run
 
 Now open te app on your phone. It will search for a bluetooth device called autopilot. When its found, connect to it.
-
-### settings in code
-that value of 2000 is the result of an analog to digital conversion (ADC). Basically, the esp chip transforms a 0-5 volt input to 0 - 4096. so 2000 means roughly 2.5 volts. My motor controller outputs a voltage based on the motor load (in Amps). When the motor draws amps, it is probably on its end and should stop.
 
 ## Hardware
 1. ESP32. I prefer an USB-C type with 32 pins (CH340C)
@@ -40,7 +37,7 @@ that value of 2000 is the result of an analog to digital conversion (ADC). Basic
 5. 5V supply to ESP32.
    - Use a powerbank,
    - usb socket
-   - +5V from IBT-2
+   - +5V from L298n
    - Voltage regulator to bring the 12v/24v down to 5v.
    - Phone with USB OTG cable.  
   
