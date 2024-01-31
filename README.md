@@ -1,3 +1,6 @@
+# Installation guide
+https://youtu.be/zypO15Sglec
+
 # Facebook group.
 Please, ask question in the facebook group so others can answers and answers will be seen by everyone. Facebook is not my prefered medium but I didn't know a better one. Please join here: https://www.facebook.com/groups/721879886302423
 
