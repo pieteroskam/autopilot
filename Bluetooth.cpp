@@ -164,7 +164,7 @@ void Bluetooth::setup() {
 
 
 
-  BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(UUID_RECEIVE, BLECharacteristic::PROPERTY_WRITE);
+  BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(UUID_RECEIVE, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
   pRxCharacteristic->setCallbacks(new MyCallbacks());
 
   pService->start();
@@ -176,7 +176,7 @@ void Bluetooth::setup() {
   Version_Characteristic = pOTAService->createCharacteristic(UUID_VERSION, BLECharacteristic::PROPERTY_READ);
   Version_Characteristic->addDescriptor(new BLE2902());
 
-  FW_Characteristic = pOTAService->createCharacteristic(UUID_FW,BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_WRITE);
+  FW_Characteristic = pOTAService->createCharacteristic(UUID_FW,BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_WRITE| BLECharacteristic::PROPERTY_WRITE_NR);
   FW_Characteristic->addDescriptor(new BLE2902());
   FW_Characteristic->setCallbacks(new otaCallback());
 
