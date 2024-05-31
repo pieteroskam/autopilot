@@ -66,6 +66,7 @@ class MyServerCallbacks : public BLEServerCallbacks {
 
 class MyCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
+    //if you get an error, you didnt install the esp32 boards manager. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
     std::string rxValue = pCharacteristic->getValue();
 
     if (rxValue.length() > 0) {
