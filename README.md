@@ -4,7 +4,7 @@ https://youtu.be/zypO15Sglec
 # Facebook group.
 Please, ask question in the facebook group so others can answers and answers will be seen by everyone. Facebook is not my prefered medium but I didn't know a better one. Please join here: https://www.facebook.com/groups/721879886302423
 
-I am open to make units on demand. The price for a unit is 95 euro's excluding shipping costs from the neterlands. The unit you will receive looks like this. https://youtu.be/XkwvWls0uvk
+I am open to make units on demand. The price for the control a unit is 95 euro's excluding shipping costs from the neterlands. The unit you will receive looks like this. https://youtu.be/XkwvWls0uvk
 pieteroskam@gmail.com
 
 
