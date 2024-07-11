@@ -25,11 +25,9 @@ BLEService *Bluetooth::pOTAService = nullptr;
 #define CHARPOS_UPDATE_FLAG 5
 
 esp_ota_handle_t otaHandler = 0;
-
 bool updateFlag = false;
-bool readyFlag = false;
-int bytesReceived = 0;
-int timesWritten = 0;
+size_t totalSize = 0;
+size_t remainingSize = 0;
 
 //end ota
 
@@ -66,8 +64,8 @@ class MyServerCallbacks : public BLEServerCallbacks {
 
 class MyCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
-    //if you get an error, you didnt install the esp32 boards manager. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
-    std::string rxValue = pCharacteristic->getValue();
+    //if you get an error, you didnt install the esp32 boards manager Version 3. Go to tools->boards manager and search for esp32. Install the esp32 by Espressif Systems.
+    String rxValue = pCharacteristic->getValue();
 
     if (rxValue.length() > 0) {
       String rxString = rxValue.c_str();
@@ -104,41 +102,51 @@ class MyCallbacks : public BLECharacteristicCallbacks {
 
 class otaCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
+    String rxDataStr = pCharacteristic->getValue();
+    int rxDataSize = rxDataStr.length();
+    const uint8_t* rxData = (const uint8_t*)rxDataStr.c_str();
 
-    std::string rxData = pCharacteristic->getValue();
-
-      Serial.print("packet receiced size:");
-  Serial.print(rxData.length());
-  Serial.print(" value: ");
-  Serial.println(rxData.c_str());
-
-
-    if (!updateFlag) { //If it's the first packet of OTA since bootup, begin OTA
+    if (!updateFlag) { // If it's the first packet of OTA since bootup, begin OTA
+      totalSize = rxData[0] | (rxData[1] << 8) | (rxData[2] << 16) | (rxData[3] << 24);
+      remainingSize = totalSize;
       Serial.println("BeginOTA");
-      esp_ota_begin(esp_ota_get_next_update_partition(NULL), OTA_SIZE_UNKNOWN, &otaHandler);
+      Serial.print("Total size: ");
+      Serial.println(totalSize);
+      esp_err_t err = esp_ota_begin(esp_ota_get_next_update_partition(NULL), totalSize, &otaHandler);
+        if (err != ESP_OK) {
+          Serial.print("esp_ota_begin failed: ");
+          Serial.println(err);
+          return;
+        }
       updateFlag = true;
-    }
-    if (rxData.length() > 0){
-      esp_ota_write(otaHandler, rxData.c_str(), rxData.length());
-      if (rxData.length() != FULL_PACKET)
-      {
+       uint8_t txData[5] = {1, 2, 3, 4, 5};
+      //delay(1000);
+      pCharacteristic->setValue((uint8_t*)txData, 5);
+      pCharacteristic->notify();
+
+      return;
+    }else if(rxDataSize > 0) {
+      esp_err_t err = esp_ota_write(otaHandler, rxData, rxDataSize);
+      if (err != ESP_OK) {
+        Serial.print("esp_ota_write failed: ");
+        Serial.println(err);
+        return;
+      }      
+      remainingSize -= rxDataSize;
+      //Serial.print("Remaining: ");
+      //Serial.println(remainingSize);
+
+      if (remainingSize <= 0) { // End OTA if all data is received
         esp_ota_end(otaHandler);
         Serial.println("EndOTA");
         if (ESP_OK == esp_ota_set_boot_partition(esp_ota_get_next_update_partition(NULL))) {
           delay(2000);
           esp_restart();
-        }
-        else {
+        } else {
           Serial.println("Upload Error");
         }
       }
     }
-    
-
-    uint8_t txData[5] = {1, 2, 3, 4, 5};
-    //delay(1000);
-    pCharacteristic->setValue((uint8_t*)txData, 5);
-    pCharacteristic->notify();
   }
 };
 

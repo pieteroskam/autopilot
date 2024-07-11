@@ -12,7 +12,7 @@
 
 #include "esp_ota_ops.h"
 
-#define FIRMWARE_VERSION 1
+#define FIRMWARE_VERSION 2
 
 
 class Bluetooth {
