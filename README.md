@@ -49,26 +49,26 @@ Now open te app on your phone. It will search for a bluetooth device called auto
    - Phone with USB OTG cable.  
   
 ## Wiring
-The IBT-2 has 8 pins and we use 6
-1 VCC --> +5Volts from ESP32
-2 GND --> GND from ESP32
-3 R_IS --> Not connected
-4 L_IS --> Not connected
-5 R_EN --> +5V from esp32
-6 L_EN --> +5V from esp32
-7 R_PWM --> GPIO 32 on ESP32
-8 L_PWN --> GPIO 33 on ESP32
+The IBT-2 has 8 pins and we use 6  
+1 VCC --> +5Volts from ESP32  
+2 GND --> GND from ESP32  
+3 R_IS --> Not connected  
+4 L_IS --> Not connected  
+5 R_EN --> +5V from esp32  
+6 L_EN --> +5V from esp32  
+7 R_PWM --> GPIO 32 on ESP32  
+8 L_PWN --> GPIO 33 on ESP32  
 
 # App settings 
 
-The gains are as follows:
-
-P - proportional - heading error
-I - integral - based on the accumulated error
-D - derivative - rate of turn
-DD - derivative' - rate of rate of turn
-PR - proportional root - square root of heading error
-FF - feed forward - change in heading command
+The gains are as follows:  
+  
+P - proportional - heading error  
+I - integral - based on the accumulated error  
+D - derivative - rate of turn  
+DD - derivative' - rate of rate of turn  
+PR - proportional root - square root of heading error  
+FF - feed forward - change in heading command  
 
 
 To get started retuning from scratch (or on a new boat) set all of the gains to zero, except the P and D gains. It is possible to have a fully usable (but less efficient) autopilot using only these two gains.
