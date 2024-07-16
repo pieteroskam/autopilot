@@ -41,7 +41,7 @@ Now open te app on your phone. It will search for a bluetooth device called auto
 2. Motor driver. IBT-2 (max 40Amps) or the L298n (max 2 Amps).
    - Both motor drivers have many clones and they can behave differently. the +5V power supply isnt always available. Faulty devices are common. So make sure to order atleast 2. 
 4. Jumper wires
-5. 5V supply to ESP32.
+5. 5V supply to ESP32. You have several options
    - Use a powerbank,
    - usb socket
    - +5V from L298n
