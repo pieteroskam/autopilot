@@ -2,7 +2,7 @@
 https://youtu.be/zypO15Sglec
 
 # Shop Nautinect.com
-On my website you can order  DIY packages including a pre programmed microcrontoller. Also the Full Features pilot can be bought including wireless remote, current ensing and onboard compasss can be bought.
+On https://nautinect.com you can order  DIY packages including a pre programmed microcrontoller. Also the Full Features pilot can be bought including wireless remote, current ensing and onboard compasss can be bought.
 
 # Facebook group.
 Please, ask question in the facebook group so others can answers and answers will be seen by everyone. Facebook is not my prefered medium but I didn't know a better one. Please join here: https://www.facebook.com/groups/721879886302423
