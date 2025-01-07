@@ -1,5 +1,6 @@
 # Installation guide
 https://youtu.be/zypO15Sglec
+https://nautinect.com/buildyourownautopilot
 
 # Facebook group.
 Please, ask question in the facebook group so others can answers and answers will be seen by everyone. Facebook is not my prefered medium but I didn't know a better one. Please join here: https://www.facebook.com/groups/721879886302423
@@ -13,8 +14,8 @@ ESP32 autopilot BLE
 
 This code can be flashed on an ESP32 using the Arduino SDK.
 It can be used as a standalone autopilot based on compasss steering. Another method is to download the app:
-https://play.google.com/apps/testing/com.sailtactical.autopilot
-https://testflight.apple.com/join/byXPylwX
+[https://play.google.com/apps/testing/com.sailtactical.autopilot](https://play.google.com/store/apps/details?id=com.sailtactical.autopilot)
+[https://testflight.apple.com/join/byXPylwX](https://apps.apple.com/us/app/nautinect-autopilot/id6473739289)
 
 By downloading this app, the compass, gyro and GPS of the phone will be used. In that case, you only need an ESP32 and a motor driver. Wire the motor driver to the ESP, Connect VCC and Ground as per documentation. Connect pin 33 to motor-driver-left and pin 32 to motor-driver-right. It is
 
