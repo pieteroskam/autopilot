@@ -1,5 +1,6 @@
 # Installation guide
 https://youtu.be/zypO15Sglec
+https://nautinect.com/buildyourownautopilot
 
 # Shop Nautinect.com
 On https://nautinect.com you can order  DIY packages including a pre programmed microcrontoller. Also the Full Features pilot can be bought including wireless remote, current ensing and onboard compasss can be bought.
