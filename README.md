@@ -1,6 +1,8 @@
 # Installation guide
-For setting up the basic code and the motor driver i created a little video tutorial.
+For setting up the code and the motor driver i created a little video tutorial.
 https://youtu.be/zypO15Sglec
+
+The complete firmware supporting a built-in compass, nmea, clutch and other features is send via an OTA update from the phone app to the esp32
 
 For assembling all components including an internal compass, wiresless remote and NMEA, go to:
 https://nautinect.com/buildyourownautopilot
