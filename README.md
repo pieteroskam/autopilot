@@ -3,6 +3,7 @@ This software is free to use, modify, and distribute for non-commercial purposes
 # Installation guide
 For setting up the code and the motor driver i created a little video tutorial.
 https://youtu.be/zypO15Sglec
+https://nautinect.com/buildyourownautopilot
 
 The complete firmware supporting a built-in compass, nmea, clutch and other features is send via an OTA update from the phone app to the esp32
 
@@ -24,6 +25,7 @@ This code can be flashed on an ESP32 using the Arduino SDK.
 It can be used as a standalone autopilot based on compasss steering. Another method is to download the app:
 [android](https://play.google.com/apps/testing/com.sailtactical.autopilot)
 [IOS](https://apps.apple.com/nl/app/nautinect-autopilot/id6473739289)
+
 
 By downloading this app, the compass, gyro and GPS of the phone will be used. In that case, you only need an ESP32 and a motor driver. Wire the motor driver to the ESP, Connect VCC and Ground as per documentation. Connect pin 33 to motor-driver-left and pin 32 to motor-driver-right. It is
 
