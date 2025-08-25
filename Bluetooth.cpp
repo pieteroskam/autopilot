@@ -106,17 +106,36 @@ class otaCallback : public BLECharacteristicCallbacks {
     int rxDataSize = rxDataStr.length();
     const uint8_t* rxData = (const uint8_t*)rxDataStr.c_str();
 
+    static int lastLoggedPercentage = -1; // Tracks the last logged percentage
+
+
     if (!updateFlag) { // If it's the first packet of OTA since bootup, begin OTA
       totalSize = rxData[0] | (rxData[1] << 8) | (rxData[2] << 16) | (rxData[3] << 24);
       remainingSize = totalSize;
       Serial.println("BeginOTA");
       Serial.print("Total size: ");
       Serial.println(totalSize);
-      esp_err_t err = esp_ota_begin(esp_ota_get_next_update_partition(NULL), totalSize, &otaHandler);
+      BLEDevice::setMTU(500);
+
+
+      const esp_partition_t *next_partition = esp_ota_get_next_update_partition(NULL);
+      if (next_partition != NULL) {
+        Serial.print("Next partition size: ");
+        Serial.println(next_partition->size);
+
+        //check if the partition is large enough
+        if(next_partition->size < totalSize){
+          Serial.println("Partition too small");
+          return;
+        }
+    }
+      
+
+      esp_err_t err = esp_ota_begin(next_partition, totalSize, &otaHandler);
         if (err != ESP_OK) {
           Serial.print("esp_ota_begin failed: ");
           Serial.println(err);
-          return;
+          esp_restart();
         }
       updateFlag = true;
        uint8_t txData[5] = {1, 2, 3, 4, 5};
@@ -128,23 +147,42 @@ class otaCallback : public BLECharacteristicCallbacks {
     }else if(rxDataSize > 0) {
       esp_err_t err = esp_ota_write(otaHandler, rxData, rxDataSize);
       if (err != ESP_OK) {
-        Serial.print("esp_ota_write failed: ");
-        Serial.println(err);
+        //send log message over bluetooth
+        String message = "OTA Error: ";
+        message += String(err);
+        Serial.println(message);
+        delay(500); // Give some time for the log to be sent
+        esp_restart();
         return;
-      }      
-      remainingSize -= rxDataSize;
-      //Serial.print("Remaining: ");
-      //Serial.println(remainingSize);
+      }
+      remainingSize -= rxDataSize;      
+      int currentPercentage = ((totalSize - remainingSize) * 100) / totalSize;
+      if (currentPercentage != lastLoggedPercentage) {
+          lastLoggedPercentage = currentPercentage;
+          Serial.print("Progress: ");
+          Serial.print(currentPercentage);
+          Serial.println("%");
+      }
 
-      if (remainingSize <= 0) { // End OTA if all data is received
+      if (remainingSize == 0) { // End OTA if all data is received
+          BLEServer* pServer = BLEDevice::getServer();
+        for (int i = 0; i < pServer->getConnectedCount(); i++) {
+          Serial.print("Disconnecting client ");
+          pServer->disconnect(i);
+      }
+        delay(500);
         esp_ota_end(otaHandler);
         Serial.println("EndOTA");
         if (ESP_OK == esp_ota_set_boot_partition(esp_ota_get_next_update_partition(NULL))) {
-          delay(2000);
+
           esp_restart();
         } else {
           Serial.println("Upload Error");
         }
+      } else if(remainingSize < 0) {
+        Serial.println("Error: Remaining size is negative, something went wrong!");
+        updateFlag = false; // Reset the flag to allow a new OTA process
+        esp_restart();
       }
     }
   }
