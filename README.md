@@ -3,6 +3,8 @@
 ## License
 This software is free to use, modify, and distribute **for non-commercial purposes only**.  
 Commercial use (including selling, offering services, or integrating into commercial products) is strictly prohibited.
+This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. https://creativecommons.org/licenses/by-nc-sa/4.0/
+
 
 ---
 
