@@ -144,7 +144,9 @@ All messages are strings but are automatically parsed and converted to their req
 | **NMEA0183 (wired)** | RS-422 @ 4800 baud | Receives commands with sentence $APCMD | "$APCMD,3,0" |
 | **NMEA0183 (Wi-Fi)** |UDP server | Same syntax as serial commands | "$APCMD,3,0" |
 | **NMEA2000** | PGN 743837 | Nautinect autopilot control PGN | sendN2K(pgn: 743837. payload: "3,0" |
-| **Bluetooth LE** | GATT service | Used by the mobile app. Serice UUID = ab0828b1-198e-4351-b779-901fa0e0371e Characteristic UUID 4ac8a682-9736-4e5d-932b-e9b31405049c| Bluetooth::notify(commandNotifyCharacteristic, "3,0") |
+| **Bluetooth LE** | GATT service | Used by the mobile app. 
+Serice UUID = ab0828b1-198e-4351-b779-901fa0e0371e 
+Characteristic UUID 4ac8a682-9736-4e5d-932b-e9b31405049c| Bluetooth::notify(commandNotifyCharacteristic, "3,0") |
 
 Independent from the communication channel used, the autopilot expects a string containing the required parameters and will be parsed inside the firmware.
 ---
