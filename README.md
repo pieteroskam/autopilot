@@ -170,15 +170,14 @@ Commands follow a simple CSV-like format:
 ## Command Reference
 
 ### Autopilot Commands
-
 | ID | Command | Description | Parameters |
 |----|---------|-------------|------------|
 | **1** | `motor_set` | Set motor speed directly | `int speed` (−255…255), `int duration_ms` _(optional)_ |
 | **2** | `ap_target` | Set target heading | `int heading_deg` (0–359) |
-| **3** | `ap_on` | Enable autopilot | `int headingSource` (see [HeadingSource](#headingsource)) |
+| **3** | `ap_on` | Enable autopilot | `int headingSource` (see HeadingSource) |
 | **4** | `ap_off` | Disable autopilot | _(no parameters)_ |
 | **5** | `ap_mode` | Select autopilot mode | `int mode` (0=heading, 1=route, 2=wind) |
-| **6** | `heading_source` | Change heading input source | `int source` (see [HeadingSource](#headingsource)) |
+| **6** | `heading_source` | Change heading input source | `int source` (see HeadingSource) |
 | **7** | `calibrate_gyro` | Start gyroscope calibration | _(no parameters)_ |
 | **8** | `mag_continuous` | Enable continuous magnetometer calibration | `"1"` = on, `"0"` = off |
 | **9** | `calibrate_mag` | Start magnetometer calibration | _(no parameters)_ |
@@ -186,17 +185,37 @@ Commands follow a simple CSV-like format:
 | **11** | `get_mag_cal_backup` | Read magnetometer backup from EEPROM | _(no parameters)_ |
 | **12** | `set_mag_cal_backup` | Save current calibration as backup | _(no parameters)_ |
 | **13** | `set_compass_heading` | Manually adjust compass offset | `int new_heading_deg` |
-| **14–20** | `gain_*`, `precision` | PID tuning parameters | `int gain` (0–255) |
-| **22–30** | Motor configuration | Speed limits, current limits, motor type, etc. | _(various)_ |
-| **31–34** | Wi-Fi configuration | Enable Wi-Fi, set SSID, password, port | _(various)_ |
+| **14** | `gain_overall` | Set overall PID gain | `int gain` (0–255) |
+| **15** | `gain_p` | Set proportional gain | `int gain` (0–255) |
+| **16** | `gain_i` | Set integral gain | `int gain` (0–255) |
+| **17** | `gain_d` | Set derivative gain | `int gain` (0–255) |
+| **18** | `gain_dd` | Set second derivative gain | `int gain` (0–255) |
+| **19** | `gain_ff` | Set feed-forward gain | `int gain` (0–255) |
+| **20** | `precision` | Set precision parameter | `int value` (0–255) |
+| **21** | `log_values` | Enable/disable value logging | `"1"` = on, `"0"` = off |
+| **22** | `min_motor_speed` | Set minimum motor speed | `int speed` (0–255) |
+| **23** | `max_motor_speed` | Set maximum motor speed | `int speed` (0–255) |
+| **24** | `motor_running_limit_enabled` | Enable/disable motor running limit | `"1"` = on, `"0"` = off |
+| **25** | `motor_running_limit` | Set motor running time limit | `int seconds` |
+| **26** | `motor_reverse` | Set motor direction | `"1"` = reversed, `"0"` = normal |
+| **27** | `motor_max_current` | Set maximum motor current | `int amperes` |
+| **28** | `pulse_interval` | Set pulse feedback interval | `int milliseconds` |
+| **29** | `pulse_mode` | Set pulse feedback mode | `int mode` |
+| **30** | `motor_type` | Set motor type | `int type` |
+| **31** | `wifi_enable` | Enable/disable Wi-Fi | `"1"` = on, `"0"` = off |
+| **32** | `wifi_ssid` | Set Wi-Fi SSID | `string ssid` |
+| **33** | `wifi_pass` | Set Wi-Fi password | `string password` |
+| **34** | `wifi_port` | Set Wi-Fi port | `int port` |
 | **35** | `get_calibration` | Print current calibration info | _(no parameters)_ |
-| **36–40** | Rudder configuration | Feedback sensor, limits, rudder counts | _(various)_ |
-| **41** | `set_tack_angle` | Set sailing tack angle | `int degrees` |
-| **42** | `rudder_range` | Set maximum rudder angle range | `int degrees` |
+| **36** | `rudder_feedback_type` | Set rudder feedback sensor type | `uint8_t type` (0=none, 1=voltage, 2=pulse) |
+| **37** | `rudder_center_position` | Set rudder center position | `int16_t position` |
+| **38** | `rudder_left_position` | Set rudder left limit position | `int16_t position` |
+| **39** | `rudder_right_position` | Set rudder right limit position | `int16_t position` |
+| **40** | `rudder_pulse_count` | Set rudder pulse count | `int16_t count` |
+| **41** | `set_tack_angle` | Set sailing tack angle | `int8_t degrees` |
+| **42** | `rudder_range` | Set maximum rudder angle range | `int8_t degrees` |
 | **253** | `send_settings` | Send all stored settings to app | _(no parameters)_ |
 | **254** | `protocol_version` | Return current protocol version | _(no parameters)_ |
-|----------|---------|-------------|------------|
-
 
 ## Enumerations
 
