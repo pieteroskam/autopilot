@@ -198,7 +198,7 @@ Commands follow a simple CSV-like format:
 | **24** | `motor_running_limit_enabled` | Enable/disable motor running limit | `"1"` = on, `"0"` = off |
 | **25** | `motor_running_limit` | Set motor running time limit | `int seconds` |
 | **26** | `motor_reverse` | Set motor direction | `"1"` = reversed, `"0"` = normal |
-| **27** | `motor_max_current` | Set maximum motor current | `int amperes` |
+| **27** | `motor_max_current` | Set maximum motor current | `int 0-4096` |
 | **28** | `pulse_interval` | Set pulse feedback interval | `int milliseconds` |
 | **29** | `pulse_mode` | Set pulse feedback mode | `int mode` |
 | **30** | `motor_type` | Set motor type | `int type` |
