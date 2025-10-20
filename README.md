@@ -136,16 +136,17 @@ All messages are strings but are automatically parsed and converted to their req
 
 ---
 
-## Communication Channels
+## API - Communication channels
 
-| Channel | Protocol | Description |
-|---------|----------|-------------|
-| **Serial** | UART @ 115200 baud | Used for debug or direct control |
-| **NMEA0183 (wired)** | RS-422 @ 4800 baud | Receives commands or $II sentences |
-| **NMEA0183 (Wi-Fi)** | TCP server | Same syntax as serial commands |
-| **NMEA2000** | PGN 743837 | Proprietary autopilot control PGN |
-| **Bluetooth LE** | GATT service | Used by the mobile app |
+| Channel | Protocol | Description |  Example |
+|---------|----------|-------------|-------------|
+| **Serial** | UART @ 115200 baud | Used for debug or direct control | Serial.print("3,0") |
+| **NMEA0183 (wired)** | RS-422 @ 4800 baud | Receives commands with sentence $APCMD | "$APCMD,3,0" |
+| **NMEA0183 (Wi-Fi)** |UDP server | Same syntax as serial commands | "$APCMD,3,0" |
+| **NMEA2000** | PGN 743837 | Nautinect autopilot control PGN | sendN2K(pgn: 743837. payload: "3,0" |
+| **Bluetooth LE** | GATT service | Used by the mobile app. Serice UUID = ab0828b1-198e-4351-b779-901fa0e0371e Characteristic UUID 4ac8a682-9736-4e5d-932b-e9b31405049c| Bluetooth::notify(commandNotifyCharacteristic, "3,0") |
 
+Independent from the communication channel used, the autopilot expects a string containing the required parameters and will be parsed inside the firmware.
 ---
 
 ## Command Format
@@ -162,7 +163,6 @@ Commands follow a simple CSV-like format:
 3,0            → ap_on (headingSource = 0)
 2,180          → ap_target (target heading = 180°)
 1,200,500      → motor_set (speed = 200, duration = 500 ms)
-254            → protocol_version
 ```
 
 ---
@@ -226,7 +226,6 @@ Bluetooth::sendCommand("13,270");
 |----------|---------|-------------|------------|
 | **1** | `motor_set` | Set motor speed directly | `int speed` (−255…255), `int duration_ms` _(optional)_ |
 | **14–20** | `gain_*`, `precision` | PID tuning parameters | `int gain` (0–255) |
-| **21** | `log_values` | Select logging output | `int logType` (see [LogValues](#logvalues)) |
 | **22–30** | Motor configuration | Speed limits, current limits, motor type, etc. | _(various)_ |
 
 **Example:**
@@ -333,53 +332,6 @@ enum HeadingSource {
 
 ---
 
-### LogValues
-
-Defines what data should be logged to serial output.
-
-```cpp
-enum LogValues {
-  none = 0,
-  pidOutput = 1,
-  motorCurrent = 2,
-  rudderPosition = 3,
-  magnetometerData = 4
-};
-```
-
-| Value | Type | Description |
-|-------|------|-------------|
-| **0** | `none` | No logging output |
-| **1** | `pidOutput` | Log PID controller outputs (P/I/D/DD/FF) |
-| **2** | `motorCurrent` | Log motor current draw (Amperes) |
-| **3** | `rudderPosition` | Log rudder position (degrees) |
-| **4** | `magnetometerData` | Log raw magnetometer data (µT) |
-
----
-
-## NMEA Integration
-
-The autopilot integrates with standard marine electronics via NMEA protocols.
-
-### NMEA0183 Sentences
-
-| Sentence | Function | Description |
-|----------|----------|-------------|
-| **$IIRSA** | Rudder Sensor Angle | Reports current rudder position |
-| **$WIMWV** | Wind Speed and Angle | Receives wind data for wind mode |
-| **$IIRMC** | Recommended Minimum | Receives GPS heading and position |
-
-### NMEA2000
-
-| PGN | Function | Description |
-|-----|----------|-------------|
-| **743837** | Autopilot Control | Proprietary PGN for autopilot commands |
-
-### Wi-Fi TCP
-
-Wi-Fi commands use the same syntax as serial commands and are sent via TCP to the configured port (default: 10110).
-
----
 
 ## Example Usage
 
