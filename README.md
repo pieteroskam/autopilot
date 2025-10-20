@@ -144,9 +144,7 @@ All messages are strings but are automatically parsed and converted to their req
 | **NMEA0183 (wired)** | RS-422 @ 4800 baud | Receives commands with sentence $APCMD | "$APCMD,3,0" |
 | **NMEA0183 (Wi-Fi)** |UDP server | Same syntax as serial commands | "$APCMD,3,0" |
 | **NMEA2000** | PGN 743837 | Nautinect autopilot control PGN | sendN2K(pgn: 743837. payload: "3,0" |
-| **Bluetooth LE** | GATT service | Used by the mobile app. 
-Serice UUID = ab0828b1-198e-4351-b779-901fa0e0371e 
-Characteristic UUID 4ac8a682-9736-4e5d-932b-e9b31405049c| Bluetooth::notify(commandNotifyCharacteristic, "3,0") |
+| **Bluetooth LE** | GATT service | Used by the mobile app.<br>Serice UUID = ab0828b1-198e-4351-b779-901fa0e0371e <br>Characteristic UUID 4ac8a682-9736-4e5d-932b-e9b31405049c| Bluetooth::notify(commandNotifyCharacteristic, "3,0") |
 
 Independent from the communication channel used, the autopilot expects a string containing the required parameters and will be parsed inside the firmware.
 ---
@@ -175,30 +173,12 @@ Commands follow a simple CSV-like format:
 
 | ID | Command | Description | Parameters |
 |----|---------|-------------|------------|
+| **1** | `motor_set` | Set motor speed directly | `int speed` (−255…255), `int duration_ms` _(optional)_ |
 | **2** | `ap_target` | Set target heading | `int heading_deg` (0–359) |
 | **3** | `ap_on` | Enable autopilot | `int headingSource` (see [HeadingSource](#headingsource)) |
 | **4** | `ap_off` | Disable autopilot | _(no parameters)_ |
 | **5** | `ap_mode` | Select autopilot mode | `int mode` (0=heading, 1=route, 2=wind) |
 | **6** | `heading_source` | Change heading input source | `int source` (see [HeadingSource](#headingsource)) |
-
-**Example:**
-```cpp
-// Enable autopilot with internal compass
-Bluetooth::sendCommand("3,0");
-
-// Set target heading to 180°
-Bluetooth::sendCommand("2,180");
-
-// Switch to wind-angle mode
-Bluetooth::sendCommand("5,2");
-```
-
----
-
-### Calibration Commands
-
-| ID | Command | Description | Parameters |
-|----|---------|-------------|------------|
 | **7** | `calibrate_gyro` | Start gyroscope calibration | _(no parameters)_ |
 | **8** | `mag_continuous` | Enable continuous magnetometer calibration | `"1"` = on, `"0"` = off |
 | **9** | `calibrate_mag` | Start magnetometer calibration | _(no parameters)_ |
@@ -206,87 +186,17 @@ Bluetooth::sendCommand("5,2");
 | **11** | `get_mag_cal_backup` | Read magnetometer backup from EEPROM | _(no parameters)_ |
 | **12** | `set_mag_cal_backup` | Save current calibration as backup | _(no parameters)_ |
 | **13** | `set_compass_heading` | Manually adjust compass offset | `int new_heading_deg` |
-| **35** | `get_calibration` | Print current calibration info | _(no parameters)_ |
-
-**Example:**
-```cpp
-// Start magnetometer calibration
-Bluetooth::sendCommand("9");
-
-// Enable continuous calibration
-Bluetooth::sendCommand("8,1");
-
-// Set compass to known heading (e.g., 270°)
-Bluetooth::sendCommand("13,270");
-```
-
----
-
-### PID & Motor Configuration
-
-| ID Range | Command | Description | Parameters |
-|----------|---------|-------------|------------|
-| **1** | `motor_set` | Set motor speed directly | `int speed` (−255…255), `int duration_ms` _(optional)_ |
 | **14–20** | `gain_*`, `precision` | PID tuning parameters | `int gain` (0–255) |
 | **22–30** | Motor configuration | Speed limits, current limits, motor type, etc. | _(various)_ |
-
-**Example:**
-```cpp
-// Set motor to 200 (forward) for 500ms
-Bluetooth::sendCommand("1,200,500");
-
-// Enable PID output logging
-Bluetooth::sendCommand("21,1");
-```
-
----
-
-### Network Configuration
-
-| ID Range | Command | Description | Parameters |
-|----------|---------|-------------|------------|
 | **31–34** | Wi-Fi configuration | Enable Wi-Fi, set SSID, password, port | _(various)_ |
-
-Default Wi-Fi port: **10110**
-
----
-
-### Rudder Configuration
-
-| ID Range | Command | Description | Parameters |
-|----------|---------|-------------|------------|
+| **35** | `get_calibration` | Print current calibration info | _(no parameters)_ |
 | **36–40** | Rudder configuration | Feedback sensor, limits, rudder counts | _(various)_ |
 | **41** | `set_tack_angle` | Set sailing tack angle | `int degrees` |
 | **42** | `rudder_range` | Set maximum rudder angle range | `int degrees` |
-
-**Example:**
-```cpp
-// Set tack angle to 90°
-Bluetooth::sendCommand("41,90");
-
-// Set rudder range to 35°
-Bluetooth::sendCommand("42,35");
-```
-
----
-
-### System Commands
-
-| ID | Command | Description | Parameters |
-|----|---------|-------------|------------|
 | **253** | `send_settings` | Send all stored settings to app | _(no parameters)_ |
 | **254** | `protocol_version` | Return current protocol version | _(no parameters)_ |
+|----------|---------|-------------|------------|
 
-**Example:**
-```cpp
-// Request protocol version
-Bluetooth::sendCommand("254");
-
-// Request all settings
-Bluetooth::sendCommand("253");
-```
-
----
 
 ## Enumerations
 
@@ -332,82 +242,6 @@ enum HeadingSource {
 | **5** | `NMEA_GPS` | External NMEA GPS heading |
 | **6** | `NMEA_Compass` | External NMEA compass heading |
 
----
-
-
-## Example Usage
-
-### Basic Autopilot Operation
-
-```cpp
-// Enable autopilot with internal compass
-Bluetooth::sendCommand("3,0");
-
-// Set target heading to 180°
-Bluetooth::sendCommand("2,180");
-
-// Disable autopilot
-Bluetooth::sendCommand("4");
-```
-
-### Wind Mode Sailing
-
-```cpp
-// Switch to wind-angle mode
-Bluetooth::sendCommand("5,2");
-
-// Set heading source to Apparent Wind Angle
-Bluetooth::sendCommand("6,3");
-
-// Enable autopilot
-Bluetooth::sendCommand("3,3");
-
-// Set tack angle to 45°
-Bluetooth::sendCommand("41,45");
-```
-
-### Manual Motor Control
-
-```cpp
-// Turn rudder right at speed 150 for 1 second
-Bluetooth::sendCommand("1,150,1000");
-
-// Full left rudder
-Bluetooth::sendCommand("1,-255");
-
-// Stop motor
-Bluetooth::sendCommand("1,0");
-```
-
-### Compass Calibration
-
-```cpp
-// Start magnetometer calibration
-Bluetooth::sendCommand("9");
-
-// Rotate boat slowly through 360° while calibrating...
-
-// Save calibration as backup
-Bluetooth::sendCommand("12");
-
-// Get calibration info
-Bluetooth::sendCommand("35");
-```
-
-### Debugging & Logging
-
-```cpp
-// Enable PID output logging
-Bluetooth::sendCommand("21,1");
-
-// Enable motor current logging
-Bluetooth::sendCommand("21,2");
-
-// Disable logging
-Bluetooth::sendCommand("21,0");
-```
-
----
 
 ## Parser Behavior
 
