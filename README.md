@@ -102,6 +102,10 @@ When found, connect to it.
 6. L_EN  → +5V from ESP32
 7. R_PWM → GPIO 32 on ESP32
 8. L_PWM → GPIO 33 on ESP32
+```
+
+---
+
 # ⚓ Command API Documentation
 
 ## Table of Contents
@@ -109,173 +113,257 @@ When found, connect to it.
 - [Communication Channels](#communication-channels)
 - [Command Format](#command-format)
 - [Command Reference](#command-reference)
-  - [Autopilot Commands](#autopilot-commands)
-  - [Calibration Commands](#calibration-commands)
-  - [PID & Motor Configuration](#pid--motor-configuration)
-  - [Network Configuration](#network-configuration)
-  - [Rudder Configuration](#rudder-configuration)
-  - [System Commands](#system-commands)
 - [Enumerations](#enumerations)
-- [NMEA Integration](#nmea-integration)
-- [Example Usage](#example-usage)
+- [Route Following & Chartplotter Integration](#route-following--chartplotter-integration)
+- [BLE PIN Gate](#ble-pin-gate)
 - [Parser Behavior](#parser-behavior)
 - [Firmware Requirements](#firmware-requirements)
-- [References](#references)
 
 ---
 
 ## Overview
 
-All commands (from Serial, Wi-Fi, NMEA0183, or NMEA2000) are processed through a unified command handler:
+All commands — from Serial, Wi-Fi, NMEA0183, NMEA2000, or Bluetooth LE — are processed through a single unified command handler:
 
 ```cpp
-void processCommand(const std::string& rxString);
+void processCommand(const std::string& rxString, CommunicationSource fromSource);
 ```
 
-All messages are strings but are automatically parsed and converted to their required data types (int, float, bool, enum, etc.).
+Text commands are CSV-like strings; the binary channels (NMEA2000 bus and the BLE N2K characteristic) are decoded into the same string form before dispatch, so every channel supports the same command set.
+
+Any string starting with `$` is routed to the NMEA0183 parser instead (so you can inject NMEA sentences over any text channel, including BLE and Serial).
 
 ---
 
-## API - Communication channels
+## Communication Channels
 
-| Channel | Protocol | Description |  Example |
-|---------|----------|-------------|-------------|
-| **Serial** | UART @ 115200 baud | Used for debug or direct control | Serial.print("3,0") |
-| **NMEA0183 (wired)** | RS-422 @ 4800 baud | Receives commands with sentence $APCMD | "$APCMD,3,0" |
-| **NMEA0183 (Wi-Fi)** |UDP server | Same syntax as serial commands | "$APCMD,3,0" |
-| **NMEA2000** | PGN 743837 | Nautinect autopilot control PGN | sendN2K(pgn: 743837. payload: "3,0" |
-| **Bluetooth LE** | GATT service | Used by the mobile app.<br>Serice UUID = ab0828b1-198e-4351-b779-901fa0e0371e <br>Characteristic UUID 4ac8a682-9736-4e5d-932b-e9b31405049c| Bluetooth::notify(commandNotifyCharacteristic, "3,0") |
+| Channel | Protocol | Description | Example |
+|---------|----------|-------------|---------|
+| **Serial** | UART @ 115200 baud | Debug or direct control | `3,0` |
+| **NMEA0183 (wired)** | RS-422 @ 4800 baud | Commands wrapped in an `$APCMD` sentence; standard sentences (RMC, MWV, APB, RSA) are parsed directly | `$APCMD,3` |
+| **NMEA0183 (Wi-Fi)** | UDP, port 10110 (configurable) | Same sentences as wired NMEA0183 | `$GPRMC,...` |
+| **NMEA2000** | Proprietary PGN **130971** | Nautinect autopilot control PGN (see binary format below). PGN 130970 = status broadcast, 130972 = setting values | — |
+| **BLE text channel** | GATT write, characteristic `4ac8a682-9736-4e5d-932b-e9b31405049c` | Used by the mobile app for text commands. Responses/notifications arrive on `0438da27-ea40-461a-b9bc-f486f40f401c` | write `"3,0"` |
+| **BLE N2K channel** | GATT write/notify, characteristic `47ca08d8-ae18-4e2e-9629-8591474e1153` | Binary pipe carrying NMEA2000 frames: `[PGN lo][PGN mid][PGN hi][payload]`. **Firmware 4.4.1+** feeds incoming frames through the same PGN parser as the physical NMEA2000 bus, so standard PGNs (129283, 129284, 129025, 129026, 130306, 127250, …) work over BLE too. Status/settings PGNs are notified back on the same characteristic | — |
 
-Independent from the communication channel used, the autopilot expects a string containing the required parameters and will be parsed inside the firmware.
+Service UUID (all BLE characteristics): `ab0828b1-198e-4351-b779-901fa0e0371e`
+
 ---
 
 ## Command Format
 
-Commands follow a simple CSV-like format:
+### Text form (Serial, Wi-Fi, `$APCMD`, BLE text channel)
 
 ```
 <CommandID>,<value>[,<value2>][,<value3>]
 ```
 
-### Examples
+Examples:
 
 ```
-3,0            → ap_on (headingSource = 0)
+3,0            → ap_on (and switch heading source to 0)
 2,180          → ap_target (target heading = 180°)
-1,200,500      → motor_set (speed = 200, duration = 500 ms)
+43,235.0,4.20,52.545275,4.925772 → phone GPS: cog, sog (knots), lat, lon
+motor200       → legacy raw motor command (speed −255…255)
+```
+
+### Binary form (NMEA2000 PGN 130971, and the same frame tunneled over the BLE N2K channel)
+
+Payload layout of PGN 130971:
+
+```
+[manufacturer code: uint16 LE = 2046] [subID: 1 byte] [data...]
+```
+
+- **subID 2** — data is a NMEA2000 var-string containing the text command, e.g. `"3,0"`.
+- **subID 3** — compact binary command: `[CommandID: 1 byte]` followed by
+  - one or two `int16` (little-endian) values for numeric commands,
+  - a single byte for `get_setting` (252),
+  - a zero-terminated string for string commands (`wifi_ssid`, `wifi_pass`).
+
+On the BLE N2K characteristic the frame is prefixed with the 3-byte PGN (little-endian):
+
+```
+[0x9B 0xFF 0x01] [manufacturer LE] [subID] [data...]     (0x01FF9B = 130971)
 ```
 
 ---
 
 ## Command Reference
 
-### Autopilot Commands
+### Autopilot control
 | ID | Command | Description | Parameters |
 |----|---------|-------------|------------|
 | **1** | `motor_set` | Set motor speed directly | `int speed` (−255…255), `int duration_ms` _(optional)_ |
 | **2** | `ap_target` | Set target heading | `int heading_deg` (0–359) |
-| **3** | `ap_on` | Enable autopilot | `int headingSource` (see HeadingSource) |
-| **4** | `ap_off` | Disable autopilot | _(no parameters)_ |
-| **5** | `ap_mode` | Select autopilot mode | `int mode` (0=heading, 1=route, 2=wind) |
+| **3** | `ap_on` | Engage autopilot | `int headingSource` _(optional, see HeadingSource)_ |
+| **4** | `ap_off` | Disengage autopilot | _(none)_ |
 | **6** | `heading_source` | Change heading input source | `int source` (see HeadingSource) |
-| **7** | `calibrate_gyro` | Start gyroscope calibration | _(no parameters)_ |
-| **8** | `mag_continuous` | Enable continuous magnetometer calibration | `"1"` = on, `"0"` = off |
-| **9** | `calibrate_mag` | Start magnetometer calibration | _(no parameters)_ |
-| **10** | `mag_default` | Reset magnetometer to default calibration | _(no parameters)_ |
-| **11** | `get_mag_cal_backup` | Read magnetometer backup from EEPROM | _(no parameters)_ |
-| **12** | `set_mag_cal_backup` | Save current calibration as backup | _(no parameters)_ |
+| **50** | `target_heading_add` | Adjust target heading by a delta | `int degrees` (signed) |
+| **51** | `tack` | Perform a tack | `1` = starboard, `0` = port |
+| **41** | `set_tack_angle` | Set sailing tack angle | `int degrees` |
+| **44** | `minor_degree_change` | Degrees per +1/−1 button press | `uint8_t degrees` |
+
+### Compass & calibration
+| ID | Command | Description | Parameters |
+|----|---------|-------------|------------|
+| **7** | `calibrate_gyro` | Start gyroscope calibration | _(none)_ |
+| **8** | `mag_continuous` | Continuous magnetometer calibration | `1` = on, `0` = off |
+| **9** | `calibrate_mag` | Start magnetometer calibration | _(none)_ |
+| **10** | `mag_default` | Reset magnetometer to default calibration | _(none)_ |
+| **11** | `get_mag_cal_backup` | Read magnetometer backup from EEPROM | _(none)_ |
+| **12** | `set_mag_cal_backup` | Save current calibration as backup | _(none)_ |
 | **13** | `set_compass_heading` | Manually adjust compass offset | `int new_heading_deg` |
-| **14** | `gain_overall` | Set overall PID gain | `int gain` (0–255) |
-| **15** | `gain_p` | Set proportional gain | `int gain` (0–255) |
-| **16** | `gain_i` | Set integral gain | `int gain` (0–255) |
-| **17** | `gain_d` | Set derivative gain | `int gain` (0–255) |
-| **18** | `gain_dd` | Set second derivative gain | `int gain` (0–255) |
-| **19** | `gain_ff` | Set feed-forward gain | `int gain` (0–255) |
-| **20** | `precision` | Set precision parameter | `int value` (0–255) |
-| **21** | `log_values` | Enable/disable value logging | `"1"` = on, `"0"` = off |
-| **22** | `min_motor_speed` | Set minimum motor speed | `int speed` (0–255) |
-| **23** | `max_motor_speed` | Set maximum motor speed | `int speed` (0–255) |
-| **24** | `motor_running_limit_enabled` | Enable/disable motor running limit | `"1"` = on, `"0"` = off |
-| **25** | `motor_running_limit` | Set motor running time limit | `int seconds` |
-| **26** | `motor_reverse` | Set motor direction | `"1"` = reversed, `"0"` = normal |
-| **27** | `motor_max_current` | Set maximum motor current | `int 0-4096` |
-| **28** | `pulse_interval` | Set pulse feedback interval | `int milliseconds` |
-| **29** | `pulse_mode` | Set pulse feedback mode | `int mode` |
-| **30** | `motor_type` | Set motor type | `int type` |
-| **31** | `wifi_enable` | Enable/disable Wi-Fi | `"1"` = on, `"0"` = off |
-| **32** | `wifi_ssid` | Set Wi-Fi SSID | `string ssid` |
-| **33** | `wifi_pass` | Set Wi-Fi password | `string password` |
-| **34** | `wifi_port` | Set Wi-Fi port | `int port` |
-| **35** | `get_calibration` | Print current calibration info | _(no parameters)_ |
-| **36** | `rudder_feedback_type` | Set rudder feedback sensor type | `uint8_t type` (0=none, 1=voltage, 2=pulse) |
-| **37** | `rudder_center_position` | Set rudder center position | `int16_t position` |
-| **38** | `rudder_left_position` | Set rudder left limit position | `int16_t position` |
-| **39** | `rudder_right_position` | Set rudder right limit position | `int16_t position` |
-| **40** | `rudder_pulse_count` | Set rudder pulse count | `int16_t count` |
-| **41** | `set_tack_angle` | Set sailing tack angle | `int8_t degrees` |
-| **42** | `rudder_range` | Set maximum rudder angle range | `int8_t degrees` |
-| **253** | `send_settings` | Send all stored settings to app | _(no parameters)_ |
-| **254** | `protocol_version` | Return current protocol version | _(no parameters)_ |
+| **35** | `get_calibration` | Print current calibration info | _(none)_ |
+| **45** | `calibrate_gyro_mag_single_point` | Single-point calibration against a known course | `cog_deg, fieldStrength_µT, inclination_deg, declination_deg` |
+| **46** | `calibration_progress` | _(autopilot → display)_ calibration coverage broadcast | 36-char segment string |
 
-## Enumerations
+### PID configuration
+| ID | Command | Description | Parameters |
+|----|---------|-------------|------------|
+| **14** | `gain_overall` | Overall PID gain | `int gain` |
+| **15** | `gain_p` | Proportional gain | `int gain` |
+| **16** | `gain_i` | Integral gain | `int gain` |
+| **17** | `gain_d` | Derivative gain | `int gain` |
+| **18** | `gain_dd` | Second-derivative gain | `int gain` |
+| **19** | `gain_ff` | Feed-forward gain | `int gain` |
+| **20** | `precision` | Dead-band / precision | `int value` |
 
-### ApMode
+### Motor & rudder configuration
+| ID | Command | Description | Parameters |
+|----|---------|-------------|------------|
+| **22** | `min_motor_speed` | Minimum motor speed | `int speed` (0–255) |
+| **23** | `max_motor_speed` | Maximum motor speed | `int speed` (0–255) |
+| **24** | `motor_running_limit_enabled` | Enable motor running limit | `1` / `0` |
+| **25** | `motor_running_limit` | Motor running time limit | `int seconds` |
+| **26** | `motor_reverse` | Reverse motor direction | `1` / `0` |
+| **27** | `motor_max_current` | Maximum motor current | `int` (0–4096) |
+| **28** | `pulse_interval` | Pulse feedback interval | `int ms` |
+| **29** | `pulse_mode` | Pulse feedback mode | `int mode` |
+| **30** | `motor_type` | Motor type | `int type` |
+| **36** | `rudder_feedback_type` | Rudder feedback sensor type | `0` = none, `1` = voltage, `2` = pulse |
+| **37** | `rudder_center_position` | Rudder center position | `int16` |
+| **38** | `rudder_left_position` | Rudder left limit | `int16` |
+| **39** | `rudder_right_position` | Rudder right limit | `int16` |
+| **40** | `rudder_pulse_count` | Rudder pulse count | `int16` |
+| **42** | `rudder_range` | Maximum rudder angle range | `int degrees` |
+| **62** | `rudder_command` | Rudder demand from an external control loop (position with feedback sensor, time-based pulse without) | `int16` |
 
-Defines the autopilot operating mode.
+### GPS & route
+| ID | Command | Description | Parameters |
+|----|---------|-------------|------------|
+| **43** | `phone_gps_data` | Phone GPS fix (app → autopilot) | `cog_deg, sog_knots, lat, lon` |
+| **48** | `nmea_gps_fix` | _(autopilot → app)_ onboard GPS fix broadcast, 1 Hz | `lat, lon, cog, sog, xte` |
+| **60** | `set_waypoint` | _(legacy)_ single waypoint for local heading-to-steer computation. Prefer sending APB / PGN 129284 instead | `lat, lon` |
+| **61** | `xte_gain` | XTE correction gain applied in TRACK mode | `uint8_t` (1–100, degrees per 100 m XTE, default 17) |
 
-```cpp
-enum ApMode { heading, route, wind };
-```
+### Network & NMEA
+| ID | Command | Description | Parameters |
+|----|---------|-------------|------------|
+| **31** | `wifi_enable` | Wi-Fi mode | `int mode` |
+| **32** | `wifi_ssid` | Wi-Fi SSID | `string` |
+| **33** | `wifi_pass` | Wi-Fi password | `string` |
+| **34** | `wifi_port` | UDP port for NMEA over Wi-Fi | `int port` |
+| **49** | `get_nmea_state` | Report NMEA0183/2000/Wi-Fi RX/TX counters | _(none)_ |
+| **70** | `nmea_emulation_mode` | Emulate a commercial pilot on the NMEA2000 bus | `0` = off, `1` = Raymarine, `2` = Navico (B&G/Simrad/Lowrance) |
 
-| Value | Mode | Description |
-|-------|------|-------------|
-| **0** | `heading` | Heading-hold mode (maintain compass course) |
-| **1** | `route` | Route-follow mode (follow NMEA waypoints) |
-| **2** | `wind` | Wind-angle mode (maintain angle relative to wind) |
+### Bluetooth access (PIN gate)
+| ID | Command | Description | Parameters |
+|----|---------|-------------|------------|
+| **71** | `pairing_mode` | BLE access mode | `0` = open, `1` = PIN on phone channels, `2` = PIN on all BLE channels |
+| **72** | `ble_login` | Log in for this BLE connection | `pin` (0–9999) |
+| **73** | `ble_pin` | Store a PIN (enables mode 1 if the gate was off) | `pin` (0–9999) |
+| **74** | `auth_state` | _(autopilot → app)_ lock status | `0` = locked, `1` = unlocked |
+
+### System
+| ID | Command | Description | Parameters |
+|----|---------|-------------|------------|
+| **21** | `log_values` | Enable/disable value logging stream | `1` / `0` |
+| **47** | `available_sources` | _(autopilot → app)_ bitmask of live heading sources | bit N = HeadingSource N |
+| **249** | `restore_defaults` | Reset stored settings to factory values and restart. Leaves calibration and wiring settings untouched | `0` = PID + motor, `1` = PID, `2` = motor |
+| **250** | `restart` | Restart the autopilot | _(none)_ |
+| **252** | `get_setting` | Request one setting; answered as `<id>,<value>` | `int commandId` |
+| **253** | `send_settings` | Send all stored settings to the app | _(none)_ |
+| **254** | `protocol_version` | Return the protocol version (currently 3) | _(none)_ |
 
 ---
 
-### HeadingSource
+## Enumerations
 
-Defines the source of heading information.
+### HeadingSource
 
 ```cpp
 enum HeadingSource {
-  autopilotCompass,
-  phoneCompass,
-  phoneGps,
-  AWA,
-  TWA,
-  NMEA_GPS,
-  NMEA_Compass
+  autopilotCompass = 0,
+  phoneCompass     = 1,
+  phoneGps         = 2,
+  AWA              = 3,
+  TWA              = 4,
+  NMEA_GPS         = 5,
+  NMEA_Compass     = 6,
+  TRACK            = 7
 };
 ```
 
 | Value | Source | Description |
 |-------|--------|-------------|
 | **0** | `autopilotCompass` | Internal compass (sensor unit) |
-| **1** | `phoneCompass` | Smartphone compass via Bluetooth |
-| **2** | `phoneGps` | Smartphone GPS heading via Bluetooth |
-| **3** | `AWA` | Apparent Wind Angle (from wind sensor) |
-| **4** | `TWA` | True Wind Angle (calculated) |
-| **5** | `NMEA_GPS` | External NMEA GPS heading |
-| **6** | `NMEA_Compass` | External NMEA compass heading |
+| **1** | `phoneCompass` | Smartphone compass; the phone runs the control loop and sends motor/rudder commands |
+| **2** | `phoneGps` | Smartphone GPS heading; the phone runs the control loop |
+| **3** | `AWA` | Apparent Wind Angle (wind sensor) |
+| **4** | `TWA` | True Wind Angle |
+| **5** | `NMEA_GPS` | GPS course from NMEA0183/NMEA2000 (or phone GPS via command 43) |
+| **6** | `NMEA_Compass` | External compass (PGN 127250) |
+| **7** | `TRACK` | Route following: steer to a waypoint provided by a chartplotter or the phone app |
 
+Sources 3–7 announce themselves when data arrives and expire after 10 s of silence; command 47 broadcasts which sources are currently usable.
+
+---
+
+## Route Following & Chartplotter Integration
+
+In **TRACK** mode the autopilot behaves like a pilot connected to a chartplotter: the navigator (chartplotter **or** the phone app acting as one) computes the cross-track error and bearing to the active waypoint, and the autopilot steers `bearing + xte_gain × XTE` (command 61 sets the gain, clamped to ±45°).
+
+Any of these inputs drive TRACK mode — send at ~1 Hz:
+
+| Input | Channel | Content |
+|-------|---------|---------|
+| `$--APB` sentence | NMEA0183 (wired, Wi-Fi, or any text channel) | XTE + heading to steer |
+| PGN **129283** | NMEA2000 bus or BLE N2K channel | Cross-track error (positive = boat starboard of track) |
+| PGN **129284** | NMEA2000 bus or BLE N2K channel | Distance + bearing to the active waypoint |
+
+Position and course for the autopilot's own heading come from (first available wins):
+
+| Input | Channel | Content |
+|-------|---------|---------|
+| `$--RMC` sentence | NMEA0183 | Position, SOG, COG |
+| PGN **129025** + **129026** | NMEA2000 bus or BLE N2K channel | Position rapid + COG/SOG rapid |
+| Command **43** | BLE text channel | Phone GPS: `cog, sog (knots), lat, lon` |
+
+While an onboard GPS is alive the autopilot broadcasts its fix to the app (command 48) and the app suspends its own GPS; when the phone supplies GPS via command 43, the fix broadcast is suppressed so the app never mistakes its own position for an onboard GPS (firmware 4.4.1+).
+
+Waypoint advancement (switching to the next leg) is the navigator's job — the autopilot only steers the active leg, exactly like with a commercial chartplotter.
+
+---
+
+## BLE PIN Gate
+
+Optional app-level access control (firmware 4.4.0+), configured with commands 71–73:
+
+- **Mode 0** (default): open — existing installations are unaffected.
+- **Mode 1**: phone channels require `ble_login` (72) per connection; the display/N2K channel stays open.
+- **Mode 2**: all BLE channels require login, including binary commands and nav PGNs on the N2K characteristic.
+
+Three failed logins disconnect the client. Wired channels (Serial, NMEA0183, NMEA2000) are never gated. Holding the BOOT button (GPIO 0) for 5 seconds clears the PIN and mode.
+
+---
 
 ## Parser Behavior
 
-- **All received values are strings** that are parsed by the command processor
-- Conversion is done internally using `std::stoi()` and `std::stof()` based on expected parameter types
-- **Invalid values are ignored** and an error message is sent via Serial output
-- **Valid settings are automatically saved** to EEPROM for persistence across reboots
-- Commands are case-sensitive and must match the expected format exactly
-
-### Error Handling
-
-When an invalid command is received:
-1. An error message is printed to the Serial console
-2. The command is ignored (no action taken)
-3. Previous settings remain unchanged
+- All text values are parsed with `std::stoi()` / `std::stof()` based on the expected parameter type.
+- Invalid values are ignored; an error message goes to the Serial console and previous settings remain unchanged.
+- Valid settings are automatically saved to EEPROM and persist across reboots.
+- Legacy commands (`motor<speed>`, `apOn`, `apOff`, …) remain supported for old app versions.
 
 ---
 
@@ -283,11 +371,11 @@ When an invalid command is received:
 
 | Parameter | Value |
 |-----------|-------|
-| **Minimum firmware version** | 4.0 |
+| **Current firmware version** | 4.4.1 |
+| **Protocol version** (command 254) | 3 |
+| **Standard PGNs over the BLE N2K channel** | firmware ≥ 4.4.1 (older firmware treats every frame on that characteristic as a binary command — do not send nav PGNs to it) |
+| **BLE PIN gate** | firmware ≥ 4.4.0 |
 | **Serial baudrate** | 115200 |
 | **NMEA0183 baudrate** | 4800 |
-| **Default Wi-Fi port** | 10110 (configurable) |
-| **BLE MTU** | 100–500 bytes |
-| **NMEA2000 PGN** | 743837 (proprietary) |
-
-
+| **Default Wi-Fi UDP port** | 10110 (configurable) |
+| **NMEA2000 proprietary PGNs** | 130970 (status), 130971 (commands), 130972 (settings) |
